@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+         body{
+            background-color: lightblue;
+
+         }
+       
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+    text-align: center;
+    margin-top: 20px; /* Adjust as needed */
+}
+
+#audioForm {
+    display: inline-block;
+    text-align: left; /* Reset text alignment for form contents */
+    padding: 20px;
+    border: 1px solid #ccc; /* Optional styling for form */
+}
+
+#audioForm label {
+    display: block;
+    margin-bottom: 10px;
+}
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            color: #333;
+            text-align: center;
+        }
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+    <title>Audio Upload Form</title><br>
+</head>
+<body>
+    <h1>Emotion detection model</h1><br><hr>
+    <h2>Upload Audio File</h2><br>
+    <div class="container">
+    <form id="audioForm">
+        <br>
+        <label for="audioFile">Choose an audio file:</label>
+        <input type="file" id="audioFile" name="audioFile" accept="audio/*" required>
+        <button type="submit">Submit</button>
+    </form>
+    </div>
+    <p id="result"></p>
+
+    <script>
+        document.getElementById('audioForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const audioFileInput = document.getElementById('audioFile');
+            const resultDiv = document.getElementById('result');
+            const audioFile = audioFileInput.files[0];
+
+            if (!audioFile) {
+                resultDiv.innerHTML = 'Please select an audio file.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio', audioFile);
+            
+
+            fetch('http://localhost:81/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                if (data.error) {
+                    resultDiv.innerHTML = `Error: ${data.error}`;
+                } else {
+                    m=''
+                    h=''
+                    if(data.RandomForest==='Sad'){
+                        m="Don't be sad everything will be fine listen to <mark>Kar har maidaan fateh</mark> and make your mind ready for your next step to success. "
+                        h='Kar_Har_Maidaan_Fateh_-_Sanju_128_Kbps.mp3'
+                    }
+                    if(data.RandomForest==='Happy'){
+                        m="Some one is in good mood listen to <mark>chota sa fasana </mark> to make your day more joyfull "
+                        h='Chota_Sa_Fasana_-_Karwaan_128_Kbps.mp3'
+                    }
+                    if(data.RandomForest==='Angry'){
+                        m="Some one needs to calm down listen to <mark>Aal izz well </mark> to make your mind cool "
+                        h='AIW.mp3'
+                    }
+                    resultDiv.innerHTML = `
+                        <strong>KNN Prediction:</strong> ${data.KNN} <br>
+                        <strong>SVM Prediction:</strong> ${data.SVM} <br>
+                        <strong>Random Forest Prediction:</strong> ${data.RandomForest}<br><br>
+                        <h1>Accuracy scores </h1>
+                        <strong>KNN :</strong> ${((data.KA)*100).toFixed(2)} %<br>
+                        <strong>SVM :</strong> ${((data.SA)*100).toFixed(2)} %<br>
+                        <strong>Random Forest :</strong> ${(data.RA*100).toFixed(2)} %
+                        <br><br>
+                        <strong>${m} </strong><br>
+                        <audio controls>
+                              <source src="${h}" type="audio/mp3">
+                                     Your browser does not support the audio element.
+                        </audio>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.innerHTML = 'An error occurred. Please try again.';
+            });
+        });
+    </script>
+</body>
+</html>
